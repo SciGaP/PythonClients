@@ -1,0 +1,22 @@
+run.py uses the thrift libraries.
+
+Downloaded and built thrift:
+
+http://thrift.apache.org/tutorial/py
+http://thrift.apache.org/download
+
+Need to use
+export PY_PREFIX=/media/scigap/scigap/thrift
+to tell it where to put generated python libs.
+
+Need to install pre-requisite packages (python php java, etc.)
+
+PHP_PREFIX=/media/scigap/scigap/thrift/lib/php PHP_CONFIG_PREFIX=/media/scigap/scigap/thrift/etc/php.d ERLANG_INSTALL_LIB_DIR=/media/scigap/scigap/thrift/lib PY_PREFIX=/media/scigap/scigap/thrift ./configure --prefix=/media/scigap/scigap/thrift --exec_prefix=/media/scigap/scigap/thrift PY_PREFIX=/media/scigap/scigap/thrift JAVA_PREFIX=/media/scigap/scigap/thrift/lib ERLANG_INSTALL_LIB_DIR=/media/scigap/scigap/thrift/lib --with-erlang=no PHP_PREFIX=/media/scigap/scigap/thrift/lib/php PHP_CONFIG_PREFIX=/media/scigap/scigap/thrift/etc/php.d
+
+cd /media/scigap/scigap/javaclient/airavata/airavata-api/thrift-interface-descriptions$
+/media/scigap/scigap/thrift/bin/thrift -r --gen py airavataAPI.thrift
+
+export PYTHONPATH=$PYTHONPATH:/media/scigap/scigap/thrift/lib/python2.7/site-packages:/media/scigap/scigap/javaclient/airavata/airavata-api/thrift-interface-descriptions/gen-py
+
+thrift-descriptions/gen-py/apache/airavata/api$ ./Airavata-remote -h localhost:8930 getAPIVersion
+'0.14.0'
