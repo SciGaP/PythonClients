@@ -29,6 +29,7 @@ from apache.airavata.api.ttypes import *
 
 from thrift import Thrift
 from thrift.transport import TSocket
+from thrift.transport import TSSLSocket
 from thrift.transport import TTransport
 from thrift.protocol import TBinaryProtocol
 
@@ -42,7 +43,7 @@ def main():
         port = airavataConfig.getint('AiravataServer', 'port')
 
         # Create a socket to the Airavata Server
-        transport = TSocket.TSocket(host, port)
+        transport = TSSLSocket.TSSLSocket(host, port,"True", "/Users/smarru/deploy/certs/client.pem")
 
         # Use Buffered Protocol to speedup over raw sockets
         transport = TTransport.TBufferedTransport(transport)
