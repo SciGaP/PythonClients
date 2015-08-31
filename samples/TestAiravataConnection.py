@@ -42,8 +42,9 @@ def main():
         host = airavataConfig.get('AiravataServer', 'host')
         port = airavataConfig.getint('AiravataServer', 'port')
 
+
         # Create a socket to the Airavata Server
-        transport = TSSLSocket.TSSLSocket(host, port,"True", "/Users/smarru/deploy/certs/client.pem")
+        transport = TSSLSocket.TSSLSocket(host, port,"False", "/Users/smarru/deploy/newcerts/gw77CA.pem", "/Users/smarru/deploy/newcerts/client.key", "/Users/smarru/deploy/newcerts/client.crt")
 
         # Use Buffered Protocol to speedup over raw sockets
         transport = TTransport.TBufferedTransport(transport)
