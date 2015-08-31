@@ -24,12 +24,12 @@ import sys, ConfigParser
 sys.path.append('../lib')
 
 from apache.airavata.api import Airavata
+from apache.airavata.model.security.ttypes import AuthzToken
 from apache.airavata.api.ttypes import *
 from apache.airavata.model.workspace.ttypes import *
 
 from thrift import Thrift
-from thrift.transport import TSocket
-from thrift.transport import TTransport
+from thrift.transport import TSocket, TSSLSocket, TTransport
 from thrift.protocol import TBinaryProtocol
 
 def main():
@@ -42,8 +42,12 @@ def main():
         port = airavataConfig.getint('AiravataServer', 'port')
         gateway_id = airavataConfig.get('GatewayProperties', 'gateway_id')
 
-        # Create a socket to the Airavata Server
-        transport = TSocket.TSocket(host, port)
+        # Create transport object. Comment and uncomment TLS or nonTLS according to server configuration
+        # transport = TSocket.TSocket(host, port)
+        transport = TSSLSocket.TSSLSocket(host, port, "True", \
+             airavataConfig.get('AiravataServer', 'server_ca_cert'), \
+             airavataConfig.get('AiravataServer', 'client_key'), \
+             airavataConfig.get('AiravataServer', 'server_cert'))
 
         # Use Buffered Protocol to speedup over raw sockets
         transport = TTransport.TBufferedTransport(transport)
@@ -57,7 +61,10 @@ def main():
         # Connect to Airavata Server
         transport.open()
 
-        projectLists = airavataClient.getAllUserProjects(gateway_id, "nsgtest");
+        # Create a dummy OAuth2 Token object
+        oauthDummyToken =  AuthzToken("default-token")
+
+        projectLists = airavataClient.getUserProjects(oauthDummyToken, gateway_id, "nsgtest", 10, 0);
 
         print projectLists
 

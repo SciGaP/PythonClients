@@ -21,41 +21,34 @@
 
 import sys, ConfigParser
 import time
-from transport.TSSLSocket import TSSLSocket
 
 sys.path.append('../lib')
 
-from airavata.api import Airavata
-from airavata.model.experiment.ttypes import ExperimentModel, UserConfigurationDataModel, ExperimentType
-from airavata.model.scheduling.ttypes import ComputationalResourceSchedulingModel
-from airavata.model.security.ttypes import AuthzToken
-from airavata.model.status.ttypes import ExperimentState
+from apache.airavata.api import Airavata
+from apache.airavata.model.experiment.ttypes import ExperimentModel, UserConfigurationDataModel, ExperimentType
+from apache.airavata.model.scheduling.ttypes import ComputationalResourceSchedulingModel
+from apache.airavata.model.security.ttypes import AuthzToken
+from apache.airavata.model.status.ttypes import ExperimentState
 
-import Thrift
-from transport import TSocket, TTransport
-from protocol import TBinaryProtocol
-
-
-# from apache.airavata.api import Airavata
-# from apache.airavata.model.experiment.ttypes import *
-# from apache.airavata.model.security.ttypes import *
-# from apache.airavata.model.status.ttypes import *
-# from apache.airavata.model.scheduling.ttypes import *
-
-# from thrift import Thrift
-# from thrift.transport import TSocket
-# from thrift.transport import TTransport
-# from thrift.protocol import TBinaryProtocol
+from thrift import Thrift
+from thrift.transport import TSocket, TSSLSocket, TTransport
+from thrift.protocol import TBinaryProtocol
 
 try:
     # Read Airavata Client properties
     airavataConfig = ConfigParser.RawConfigParser()
     airavataConfig.read('../conf/airavata-client.properties')
 
-    # Create a socket to the Airavata Server
-    transport = TSSLSocket(airavataConfig.get('AiravataServer', 'host'), airavataConfig.get('AiravataServer', 'port') ,\
-                           True,'/Users/syodage/Projects/codestation/pytry/Airavata/conf/cacert.pem','keyfile/path',\
-                           'cert/file/path',None)
+    host = airavataConfig.get('AiravataServer', 'host')
+    port = airavataConfig.getint('AiravataServer', 'port')
+    gateway_id = airavataConfig.get('GatewayProperties', 'gateway_id')
+
+    # Create transport object. Comment and uncomment TLS or nonTLS according to server configuration
+    # transport = TSocket.TSocket(host, port)
+    transport = TSSLSocket.TSSLSocket(host, port, "True", \
+         airavataConfig.get('AiravataServer', 'server_ca_cert'), \
+         airavataConfig.get('AiravataServer', 'client_key'), \
+         airavataConfig.get('AiravataServer', 'server_cert'))
 
     # Use Buffered Protocol to speedup over raw sockets
     transport = TTransport.TBufferedTransport(transport)
@@ -69,15 +62,14 @@ try:
     # Connect to Airavata Server
     transport.open()
 
-    # create dummy token
-    token =  AuthzToken("default-token")
-    # gateway id
-    gatewayId = "default"
-    #check airavata server is up and running.
-    print 'Airavata Server Version is:', airavataClient.getAPIVersion(token)
+    # Create a dummy OAuth2 Token object
+    oauthDummyToken =  AuthzToken("default-token")
+
+    #Verify connection to airavata server.
+    print 'Airavata Server Version is: {}'.format(airavataClient.getAPIVersion(oauthDummyToken))
 
     appId = "Python_Echo_069ea651-4937-4b89-9684-fb0682ac52f5"
-    inputs = airavataClient.getApplicationInputs(token,appId)
+    inputs = airavataClient.getApplicationInputs(oauthDummyToken, appId)
     for input in inputs:
         # print input.name
         if input.name == "Heat_Restart_File":
@@ -87,7 +79,7 @@ try:
         elif input.name == "Production_Control_File":
             input.value = "file:///home/airavata/production/appInputs/AMBER_FILES/03_Prod.in"
 
-    outputs = airavataClient.getApplicationOutputs(token, appId)
+    outputs = airavataClient.getApplicationOutputs(oauthDummyToken, appId)
     for output in outputs:
         print output.name
     projectId = "gsoc_2015_ad32cf8f-90dd-42a0-8e11-04320530659e"
@@ -106,7 +98,7 @@ try:
     # experiment.experimentInputs = inputs
     # experiment.experimentOutputs = outputs
 
-    computeResources = airavataClient.getAvailableAppInterfaceComputeResources(token, appId)
+    computeResources = airavataClient.getAvailableAppInterfaceComputeResources(oauthDummyToken, appId)
     id = None
     for key, value in computeResources.iteritems():
         # print key , " " , value
@@ -131,24 +123,24 @@ try:
     experiment.userConfigurationData  = ucdm
 
     # Create experiment
-    expId = airavataClient.createExperiment(token, gatewayId, experiment)
+    expId = airavataClient.createExperiment(oauthDummyToken, gateway_id, experiment)
 
     # launch experiment
-    airavataClient.launchExperiment(token, expId, airavataConfig.get('GatewayProperties','cred_token_id'))
+    airavataClient.launchExperiment(oauthDummyToken, expId, airavataConfig.get('GatewayProperties','cred_token_id'))
 
     while (1):
-        experiment = airavataClient.getExperiment(token, expId)
+        experiment = airavataClient.getExperiment(oauthDummyToken, expId)
         #print 'Experiment', experiment
         #print 'Experimetn status int ', experiment.experimentStatus.state
         expStatusInt = experiment.experimentStatus.state
         expStatus = ExperimentState._VALUES_TO_NAMES[experiment.experimentStatus.state]
-        print 'Experimet Status' , expStatus
+        print 'Experiment Status' , expStatus
         if expStatusInt == ExperimentState.COMPLETED or expStatusInt == ExperimentState.CANCELED \
                 or expStatusInt == ExperimentState.FAILED:
             break
         time.sleep(2)
 
-    # Close Connection to Airavata S"erver
+    # Close Connection to Airavata Server
     transport.close()
 
 except Thrift.TException, tx:

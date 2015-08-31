@@ -25,12 +25,11 @@ sys.path.append('../lib')
 sys.path.append('../')
 
 from apache.airavata.api import Airavata
+from apache.airavata.model.security.ttypes import AuthzToken
 from apache.airavata.api.ttypes import *
 
 from thrift import Thrift
-from thrift.transport import TSocket
-from thrift.transport import TSSLSocket
-from thrift.transport import TTransport
+from thrift.transport import TSocket, TSSLSocket, TTransport
 from thrift.protocol import TBinaryProtocol
 
 def main():
@@ -42,9 +41,12 @@ def main():
         host = airavataConfig.get('AiravataServer', 'host')
         port = airavataConfig.getint('AiravataServer', 'port')
 
-
-        # Create a socket to the Airavata Server
-        transport = TSSLSocket.TSSLSocket(host, port,"False", "/Users/smarru/deploy/newcerts/gw77CA.pem", "/Users/smarru/deploy/newcerts/client.key", "/Users/smarru/deploy/newcerts/client.crt")
+        # Create transport object. Comment and uncomment TLS or nonTLS according to server configuration
+        # transport = TSocket.TSocket(host, port)
+        transport = TSSLSocket.TSSLSocket(host, port, "True", \
+             airavataConfig.get('AiravataServer', 'server_ca_cert'), \
+             airavataConfig.get('AiravataServer', 'client_key'), \
+             airavataConfig.get('AiravataServer', 'server_cert'))
 
         # Use Buffered Protocol to speedup over raw sockets
         transport = TTransport.TBufferedTransport(transport)
@@ -58,7 +60,10 @@ def main():
         # Connect to Airavata Server
         transport.open()
 
-        print 'Airavata Server Version is: {}'.format(airavataClient.getAPIVersion())
+        # Create a dummy OAuth2 Token object
+        oauthDummyToken =  AuthzToken("default-token")
+
+        print 'Airavata Server Version is: {}'.format(airavataClient.getAPIVersion(oauthDummyToken))
 
         # Close Connection to Airavata Server
         transport.close()
