@@ -84,7 +84,7 @@ try:
         print output.name
     projectId = "gsoc_2015_ad32cf8f-90dd-42a0-8e11-04320530659e"
     projectId = "Sample_546ded4b-3b73-43fe-a275-fa2513e9bfa6"
-    stampedeHostName = "stampede.tacc.xsede.org"
+    computeHostName = "comet.sdsc.edu"
 
     # create ExperimentModel for the experiment
     experiment = ExperimentModel()
@@ -102,7 +102,7 @@ try:
     id = None
     for key, value in computeResources.iteritems():
         # print key , " " , value
-        if value == stampedeHostName:
+        if value == computeHostName:
             id = key
             break
 
@@ -110,7 +110,7 @@ try:
     crsm = ComputationalResourceSchedulingModel()
     crsm.totalCPUCount = 4
     crsm.nodeCount = 1
-    crsm.queueName = "development"
+    crsm.queueName = "compute"
     crsm.wallTimeLimit = 30
     crsm.totalPhysicalMemory = 1
     crsm.resourceHostId = id
