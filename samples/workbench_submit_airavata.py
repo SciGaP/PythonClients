@@ -151,15 +151,12 @@ try:
             break
         time.sleep(1)
 
-    if args.verbose:
-        outputs = airavataClient.getApplicationOutputs(oauthDummyToken, airavataConfig.get('ApplicationProperties', 'application_id'))
-        for output in outputs:
-            print output.name
-            print output.value
-        expoutputs = airavataClient.getExperimentOutputs(oauthDummyToken, airavataConfig.get('ApplicationProperties', 'application_id'))
-        for expoutput in expoutputs:
-            print expoutputs.name
-            print expoutputs.value
+    jobdetails = airavataClient.getJobDetails(oauthDummyToken, exp_id)
+    for jobdetail in jobdetails:
+        print jobdetail
+        print jobdetail.stdout
+        print jobdetail.stderr
+        print jobdetail.exitCode
 
     if (expStatusInt == ExperimentState.COMPLETED):
         print 'Job submitted successfully'
