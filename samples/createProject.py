@@ -67,7 +67,7 @@ def main():
         #Create Project
         project = Project()
         project.owner = "nsgtest"
-        project.name = "CLI-Test"
+        project.name = "NSG Executions"
         project.description = "Test project to illustrate Python Client"
 
         print 'Created Project with Id:', airavataClient.createProject(oauthDummyToken, gateway_id, project)

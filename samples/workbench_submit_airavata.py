@@ -36,11 +36,11 @@ from thrift.protocol import TBinaryProtocol
 
 parser = argparse.ArgumentParser(description='Airavata client wrapper script to '
                                              'submit remote jobs to cipres/nsg submit.py')
-parser.add_argument("-commandline", help="Command line arguments to be passed to remote submit.py")
+parser.add_argument("commandline", help="Command line arguments to be passed to remote submit.py")
 parser.add_argument("-r", "--resource", choices=['comet','stampede'], default='comet',
                     help="Abbreviated Compute Resource Name: comet, stampede")
-parser.add_argument("-id", default='ind123', help="Compute Resource Allocation")
-parser.add_argument("-url", help="Monitoring URL to be called back by application upon execution")
+#parser.add_argument("-id", default='ind123', help="Compute Resource Allocation")
+#parser.add_argument("-url", help="Monitoring URL to be called back by application upon execution")
 parser.add_argument("-c", "--healthcheck", action="store_true", help="Perform a health check to Airavata Server")
 parser.add_argument("-v", "--verbose", action="store_true", help="Print verbose logging")
 
@@ -124,12 +124,14 @@ try:
     application_inputs = airavataClient.getApplicationInputs(oauthDummyToken,
                                     airavataConfig.get('ApplicationProperties', 'application_id'))
     for application_input in application_inputs:
-        if application_input.name == "Allocation-Id":
-            application_input.value = args.id
-        elif application_input.name == "Monitoring-URL":
-            application_input.value = args.url
-        elif application_input.name == "Commandline-Args":
+        if application_input.name == "Commandline-Args":
             application_input.value = args.commandline
+        # if application_input.name == "Allocation-Id":
+        #     application_input.value = args.id
+        # elif application_input.name == "Monitoring-URL":
+        #     application_input.value = args.url
+        # elif application_input.name == "Commandline-Args":
+        #     application_input.value = args.commandline
     experiment.experimentInputs = application_inputs
 
     # Create experiment
@@ -151,22 +153,29 @@ try:
             break
         time.sleep(1)
 
-    jobdetails = airavataClient.getJobDetails(oauthDummyToken, exp_id)
-    for jobdetail in jobdetails:
-        print jobdetail
-        print jobdetail.stdout
-        print jobdetail.stderr
-        print jobdetail.exitCode
+    jobdetails = airavataClient.getJobDetails(oauthDummyToken, exp_id)[0]
+
+    if args.verbose:
+        print 'Exit Code of submission is: ', jobdetails.exitCode
+
+    if (jobdetails.exitCode == 0):
+        print 'Job submitted successfully'
+        print jobdetails.stdOut
+        exit(0)
+    else:
+        print jobdetails.stdErr
+        exit(127)
 
     if (expStatusInt == ExperimentState.COMPLETED):
         print 'Job submitted successfully'
+        # Close Connection to Airavata Server
+        transport.close()
         exit(0)
     else:
         print 'Job submition failed, please check stdout, stderr for details.'
+        # Close Connection to Airavata Server
+        transport.close()
         exit(127)
-
-    # Close Connection to Airavata Server
-    transport.close()
 
 except Thrift.TException, tx:
     print '%s' % (tx.message)
