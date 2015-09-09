@@ -160,10 +160,12 @@ try:
 
     if (jobdetails.exitCode == 0):
         print 'Job submitted successfully'
-        print jobdetails.stdOut
+        print 'JOb STDOut is: ', jobdetails.stdOut
+        print 'Job STDErr is: ', jobdetails.stdErr
         exit(0)
     else:
-        print jobdetails.stdErr
+        print 'Job exited with non-zero exit code, STDOut is: ', jobdetails.stdOut
+        print 'Job exited with non-zero exit code, STDErr is: ', jobdetails.stdErr
         exit(127)
 
     if (expStatusInt == ExperimentState.COMPLETED):
